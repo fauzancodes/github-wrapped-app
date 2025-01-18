@@ -41,7 +41,7 @@ Welcome to the **GitHub Wrapped App**. This App is built using [Go](https://go.d
 
 ## How to Use?
 
-Please download the installer from the [release page](https://github.com/fauzancodes/github-wrapped-app/releases/tag/v1.0.0).
+Please download the windows installer from the [release page](https://github.com/fauzancodes/github-wrapped-app/releases/tag/v1.0.0).
 
 ## Warning
 
