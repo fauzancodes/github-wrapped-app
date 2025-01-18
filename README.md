@@ -39,7 +39,7 @@ Welcome to the **GitHub Wrapped App**. This App is built using [Go](https://go.d
   - **User Control**: Users can verify the source code, clone the repository, and run the application locally to ensure transparency.  
   - **Token Revocation**: Tokens can be revoked from GitHub after use for additional peace of mind.
 
-## How to User?
+## How to Use?
 
 Please download the installer from the [release page](https://github.com/fauzancodes/github-wrapped-app/releases/tag/v1.0.0).
 
