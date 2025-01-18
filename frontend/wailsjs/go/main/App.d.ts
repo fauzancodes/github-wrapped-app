@@ -6,5 +6,3 @@ import {models} from '../models';
 export function GenerateData(arg1:dto.Request):Promise<models.GWAResult>;
 
 export function GetData(arg1:string):Promise<models.GWAResult>;
-
-export function Greet(arg1:string):Promise<string>;

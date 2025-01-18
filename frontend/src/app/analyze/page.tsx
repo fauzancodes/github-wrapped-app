@@ -4,44 +4,62 @@ import { useEffect, useState } from "react"
 import { FaIdBadge, FaKey } from "react-icons/fa6"
 import { GenerateData, GetData } from "../../../wailsjs/go/main/App"
 import { dto, models } from "../../../wailsjs/go/models"
+import Summary from "../ui/main/analyze/summary"
+import Table from "../ui/main/analyze/table"
 
 
 const Page = () => {
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoadingAnalyzing, setIsLoadingAnalyzing] = useState(false)
+  const [isLoadingFetching, setIsLoadingFetching] = useState(false)
   const [startDate, setStartDate] = useState("")
   const [endDate, setEndDate] = useState("")
   const [personalAccessToken, setPersonalAccessToken] = useState("")
   const [dataId, setDataId] = useState("")
   const [data, setData] = useState<models.GWAResult | null>(null)
+  const [error, setError] = useState("")
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (dataId && dataId !== "") {
-        try {
-          setIsLoading(true)
-  
-          const result = await GetData(dataId)
-          if (result) {
-            setData(result)
-          }
-  
-          setIsLoading(false)
-        } catch (error) {
-          console.error("Error fetching data:", error)
-          setData(null)
-          setIsLoading(false)
-        }
+  const fetchData = async (useLoading: boolean) => {
+    try {
+      setError("")
+      if (useLoading) {
+        setIsLoadingFetching(true)
+      }
+      
+      const result = await GetData(dataId)
+      if (result) {
+        setData(result)
+      }
+      
+      handleClearAnalyzingForm()
+      if (useLoading) {
+        setIsLoadingFetching(false)
+      }
+    } catch(error) {
+      if (
+        String(error).includes("failed to parse uuid") || 
+        String(error).includes("failed to get data") || 
+        String(error).includes("failed to convert data to json")
+      ) {
+        setError(String(error))
+      } else {
+        console.error("Error fetch data:", error)
+      }
+      
+      setData(null)
+      handleClearAnalyzingForm()
+      if (useLoading) {
+        setIsLoadingFetching(false)
       }
     }
-
-    fetchData()
-  }, [dataId])
-
+  }
+  
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
     try {
-      setIsLoading(true)
+      setError("")
+      setIsLoadingAnalyzing(true)
+      setDataId("")
 
       const requestData = new dto.Request({
         personal_access_token: personalAccessToken,
@@ -52,15 +70,60 @@ const Page = () => {
       const result = await GenerateData(requestData)
       if (result) {
         setDataId(result.id.toString())
+        setData(result)
+        handleClearAnalyzingForm()
       }
         
-      setIsLoading(false)
+      setIsLoadingAnalyzing(false)
     } catch(error) {
-      console.error("Error generate data:", error)
+      if (
+        String(error).includes("failed to validate request") || 
+        String(error).includes("failed to generate data")
+      ) {
+        setError(String(error))
+      } else {
+        console.error("Error generate data:", error)
+      }
       
-      setIsLoading(false)
+      setData(null)
+      handleClearAnalyzingForm()
+      setIsLoadingAnalyzing(false)
     }
   }
+
+  const handleGetData = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+
+    fetchData(true)
+  }
+
+  const handleClearAnalyzingForm = () => {
+    setStartDate("")
+    setEndDate("")
+    setPersonalAccessToken("")
+  }
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+
+    if (dataId && dataId !== null && dataId !== "" && data && data !== null && data?.progress !== "100%") {
+      interval = setInterval(() => {
+        fetchData(false)
+      }, 1000)
+    }
+
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    }
+  }, [data])
+
+  useEffect(() => {
+    if (!dataId || dataId === null || dataId == "") {
+      setData(null)
+    }
+  }, [dataId])
   
   return (
     <main className="mt-32 pb-10 min-h-screen">
@@ -111,6 +174,13 @@ const Page = () => {
             />
           </label>
         </label>
+        <section className="w-full text-center">
+          <button type="submit" className="btn btn-primary font-bold text-lg hover:text-base-100" disabled={isLoadingAnalyzing}>
+            {isLoadingAnalyzing ? "Analyzing....." : "Start Analyzing"}
+          </button>
+        </section>
+      </form>
+      <form className="mt-10 flex flex-col flex-wrap gap-5 w-full items-center px-10" onSubmit={handleGetData}>
         <label className="form-control w-full md:w-6/12">
           <div className="label">
             <span className="label-text font-medium">Or, if you have generated analysis before, please enter the data id here:</span>
@@ -127,11 +197,12 @@ const Page = () => {
           </label>
         </label>
         <section className="w-full text-center">
-          <button type="submit" className="btn btn-primary font-bold text-lg hover:text-base-100" disabled={isLoading}>
-            {isLoading ? "Start Analyzing....." : "Start Analyzing"}
+          <button type="submit" className="btn btn-primary font-bold text-lg hover:text-base-100" disabled={isLoadingFetching}>
+            {isLoadingFetching ? "Fetching Data....." : "Fetch Data"}
           </button>
         </section>
       </form>
+      {error && <p className="text-base-100 bg-accent rounded-xl !px-3 !py-2 w-fit text-center !my-10 !mx-10 md:!mx-auto">{error}</p>}
       {
         data && (
           <section className="mt-24 w-full flex flex-col items-center gap-5">
@@ -165,255 +236,132 @@ const Page = () => {
                       <span className="font-bold">{data?.username}</span>
                     </div>
                   </div>
-                  <div className="w-11/12 md:w-10/12 border-b border-bottom border-primary pb-6">
-                    <h3 className="font-bold text-2xl !mb-5">Repository Summary</h3>
-                    <div className="flex flex-wrap justify-between w-full gap-3">
-                      <p className="w-5/12 font-medium">Total Repositories: <span className="font-semibold bg-primary text-base-100 py-1 px-2 rounded">{data?.data?.repositories.total}</span></p>
-                      <p className="w-5/12 font-medium">Total Commits: <span className="font-semibold bg-primary text-base-100 py-1 px-2 rounded">{data?.data?.repositories.total_commits}</span></p>
-                      <p className="w-5/12 font-medium">Total Repositories Owned: <span className="font-semibold bg-primary text-base-100 py-1 px-2 rounded">{data?.data?.repositories.repository_owned.total}</span></p>
-                      <p className="w-5/12 font-medium">Total Commits On Repositories Owned: <span className="font-semibold bg-primary text-base-100 py-1 px-2 rounded">{data?.data?.repositories.repository_owned.total_commits}</span></p>
-                      <p className="w-5/12 font-medium">Total Repositories Contributed: <span className="font-semibold bg-primary text-base-100 py-1 px-2 rounded">{data?.data?.repositories.repository_contributed.total}</span></p>
-                      <p className="w-5/12 font-medium">Total Commits On Repositories Contributed: <span className="font-semibold bg-primary text-base-100 py-1 px-2 rounded">{data?.data?.repositories.repository_contributed.total_commits}</span></p>
-                      <p className="w-5/12 font-medium">Total Repositories Forked: <span className="font-semibold bg-primary text-base-100 py-1 px-2 rounded">{data?.data?.repositories.repository_forked.total}</span></p>
-                      <p className="w-5/12 font-medium">Total Commits On Repositories Forked: <span className="font-semibold bg-primary text-base-100 py-1 px-2 rounded">{data?.data?.repositories.repository_forked.total_commits}</span></p>
-                    </div>
-                  </div>
-                  {data?.data?.repositories.repository_owned && data.data.repositories.repository_owned.total > 0 && (
-                    <div className="w-11/12 md:w-10/12 border-b border-bottom border-primary pb-6">
-                      <h3 className="font-bold text-2xl !mb-5">Repository Owned</h3>
-                      <div className="overflow-x-auto max-h-80">
-                        <table className="table table-xs table-pin-rows">
-                          <thead>
-                            <tr className="bg-base-200 text-base-300">
-                              <th>Repository Name</th>
-                              <th>Total Commits</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {data?.data?.repositories.repository_owned.detail.sort((a, b) => b.total_commits - a.total_commits).map((item, index) => (
-                              <tr key={index} className="hover">
-                                <td>{item.name}</td>
-                                <td>{item.total_commits}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )}
-                  {data?.data?.repositories.repository_contributed && data.data.repositories.repository_contributed.total > 0 && (
-                    <div className="w-11/12 md:w-10/12 border-b border-bottom border-primary pb-6">
-                      <h3 className="font-bold text-2xl !mb-5">Repository Contributed</h3>
-                      <div className="overflow-x-auto max-h-80">
-                        <table className="table table-xs table-pin-rows">
-                          <thead>
-                            <tr className="bg-base-200 text-base-300">
-                              <th>Repository Name</th>
-                              <th>Total Commits</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {data?.data?.repositories.repository_contributed.detail.sort((a, b) => b.total_commits - a.total_commits).map((item, index) => (
-                              <tr key={index} className="hover">
-                                <td>{item.name}</td>
-                                <td>{item.total_commits}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )}
-                  {data?.data?.repositories.repository_forked && data.data.repositories.repository_forked.total > 0 && (
-                    <div className="w-11/12 md:w-10/12 border-b border-bottom border-primary pb-6">
-                      <h3 className="font-bold text-2xl !mb-5">Repository Forked</h3>
-                      <div className="overflow-x-auto max-h-80">
-                        <table className="table table-xs table-pin-rows">
-                          <thead>
-                            <tr className="bg-base-200 text-base-300">
-                              <th>Repository Name</th>
-                              <th>Total Commits</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {data?.data?.repositories.repository_forked.detail.sort((a, b) => b.total_commits - a.total_commits).map((item, index) => (
-                              <tr key={index} className="hover">
-                                <td>{item.name}</td>
-                                <td>{item.total_commits}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )}
-                  <div className="w-11/12 md:w-10/12 border-b border-bottom border-primary pb-6">
-                    <h3 className="font-bold text-2xl !mb-5">Star Summary</h3>
-                    <div className="flex flex-wrap justify-between w-full gap-3">
-                      <p className="w-5/12 font-medium">Total Starred Repositories: <span className="font-semibold bg-primary text-base-100 py-1 px-2 rounded">{data?.data?.starreds.total}</span></p>
-                      <p className="w-5/12 font-medium">Total Stargazers: <span className="font-semibold bg-primary text-base-100 py-1 px-2 rounded">{data?.data?.startgazers.total}</span></p>
-                    </div>
-                  </div>
-                  {data?.data?.starreds.detail && data.data.starreds.total > 0 && (
-                    <div className="w-11/12 md:w-10/12 border-b border-bottom border-primary pb-6">
-                      <h3 className="font-bold text-2xl !mb-5">Starred Repositories</h3>
-                      <div className="overflow-x-auto max-h-80">
-                        <table className="table table-xs table-pin-rows">
-                          <thead>
-                            <tr className="bg-base-200 text-base-300">
-                              <th>Repository Name</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {data?.data?.starreds.detail.sort().map((item, index) => (
-                              <tr key={index} className="hover">
-                                <td>{item}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )}
-                  {data?.data?.startgazers.detail && data.data.startgazers.total > 0 && (
-                    <div className="w-11/12 md:w-10/12 border-b border-bottom border-primary pb-6">
-                      <h3 className="font-bold text-2xl !mb-5">Stargazers</h3>
-                      <div className="overflow-x-auto max-h-80">
-                        <table className="table table-xs table-pin-rows">
-                          <thead>
-                            <tr className="bg-base-200 text-base-300">
-                              <th>Repository Name</th>
-                              <th>Star Giver</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {data?.data?.startgazers.detail.sort().map((item, index) => (
-                              <tr key={index} className="hover">
-                                <td>{item.split(" | ")[0]}</td>
-                                <td>{item.split(" | ")[1]}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )}
-                  {data?.data?.languages && data.data.languages.length > 0 && (
-                    <div className="w-11/12 md:w-10/12 border-b border-bottom border-primary pb-6">
-                      <h3 className="font-bold text-2xl !mb-5">Favorite Language By Bytes Of Code</h3>
-                      <div className="overflow-x-auto max-h-80">
-                        <table className="table table-xs table-pin-rows">
-                          <thead>
-                            <tr className="bg-base-200 text-base-300">
-                              <th>Languages</th>
-                              <th>Bytes Of Code</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {data?.data?.languages.sort((a, b) => b.byte_of_codes - a.byte_of_codes).map((item, index) => (
-                              <tr key={index} className="hover">
-                                <td>{item.name}</td>
-                                <td>{item.byte_of_codes} KB</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )}
-                  <div className="w-11/12 md:w-10/12 border-b border-bottom border-primary pb-6">
-                    <h3 className="font-bold text-2xl !mb-5">Follows Summary</h3>
-                    <div className="flex flex-wrap justify-between w-full gap-3">
-                      <p className="w-5/12 font-medium">Total Followers: <span className="font-semibold bg-primary text-base-100 py-1 px-2 rounded">{data?.data?.followers.total}</span></p>
-                      <p className="w-5/12 font-medium">Total Followings: <span className="font-semibold bg-primary text-base-100 py-1 px-2 rounded">{data?.data?.followings.total}</span></p>
-                      <p className="w-5/12 font-medium">Total Unfollowers: <span className="font-semibold bg-primary text-base-100 py-1 px-2 rounded">{data?.data?.unfollowers.total}</span></p>
-                      <p className="w-5/12 font-medium">Total Unfollowings: <span className="font-semibold bg-primary text-base-100 py-1 px-2 rounded">{data?.data?.unfollowings.total}</span></p>
-                    </div>
-                  </div>
-                  {data?.data?.followers && data.data.followers.total > 0 && (
-                    <div className="w-11/12 md:w-10/12 border-b border-bottom border-primary pb-6">
-                      <h3 className="font-bold text-2xl !mb-5">Folowers</h3>
-                      <div className="overflow-x-auto max-h-80">
-                        <table className="table table-xs table-pin-rows">
-                          <thead>
-                            <tr className="bg-base-200 text-base-300">
-                              <th>Username</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {data?.data?.followers.detail.sort().map((item, index) => (
-                              <tr key={index} className="hover">
-                                <td>{item}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )}
-                  {data?.data?.followings && data.data.followings.total > 0 && (
-                    <div className="w-11/12 md:w-10/12 border-b border-bottom border-primary pb-6">
-                      <h3 className="font-bold text-2xl !mb-5">Followings</h3>
-                      <div className="overflow-x-auto max-h-80">
-                        <table className="table table-xs table-pin-rows">
-                          <thead>
-                            <tr className="bg-base-200 text-base-300">
-                              <th>Username</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {data?.data?.followings.detail.sort().map((item, index) => (
-                              <tr key={index} className="hover">
-                                <td>{item}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )}
-                  {data?.data?.unfollowers && data.data.unfollowers.total > 0 && (
-                    <div className="w-11/12 md:w-10/12 border-b border-bottom border-primary pb-6">
-                      <h3 className="font-bold text-2xl !mb-5">Unfolowers</h3>
-                      <div className="overflow-x-auto max-h-80">
-                        <table className="table table-xs table-pin-rows">
-                          <thead>
-                            <tr className="bg-base-200 text-base-300">
-                              <th>Username</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {data?.data?.unfollowers.detail.sort().map((item, index) => (
-                              <tr key={index} className="hover">
-                                <td>{item}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )}
-                  {data?.data?.unfollowings && data.data.unfollowings.total > 0 && (
-                    <div className="w-11/12 md:w-10/12 border-b border-bottom border-primary pb-6">
-                      <h3 className="font-bold text-2xl !mb-5">Unfollowings</h3>
-                      <div className="overflow-x-auto max-h-80">
-                        <table className="table table-xs table-pin-rows">
-                          <thead>
-                            <tr className="bg-base-200 text-base-300">
-                              <th>Username</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {data?.data?.unfollowings.detail.sort().map((item, index) => (
-                              <tr key={index} className="hover">
-                                <td>{item}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )}
+                  <Summary 
+                    title="Repository Summary" 
+                    detail={[
+                      {
+                        title: "Total Repositories: ",
+                        data: data?.data?.repositories.total,
+                      },
+                      {
+                        title: "Total Commits: ",
+                        data: data?.data?.repositories.total_commits,
+                      },
+                      {
+                        title: "Total Repositories Owned: ",
+                        data: data?.data?.repositories.repository_owned.total,
+                      },
+                      {
+                        title: "Total Commits On Repositories Owned: ",
+                        data: data?.data?.repositories.repository_owned.total_commits,
+                      },
+                      {
+                        title: "Total Repositories Contributed: ",
+                        data: data?.data?.repositories.repository_contributed.total,
+                      },
+                      {
+                        title: "Total Commits On Repositories Contributed: ",
+                        data: data?.data?.repositories.repository_contributed.total_commits,
+                      },
+                      {
+                        title: "Total Repositories Forked: ",
+                        data: data?.data?.repositories.repository_forked.total,
+                      },
+                      {
+                        title: "Total Commits On Repositories Forked: ",
+                        data: data?.data?.repositories.repository_forked.total_commits,
+                      },
+                    ]}
+                  />
+                  {data?.data?.repositories.repository_owned && data.data.repositories.repository_owned.total > 0 && <Table 
+                    title="Repository Owned"
+                    headers={["Repository Name", "Total Commits"]}
+                    firstColumn={data?.data?.repositories.repository_owned.detail.sort((a, b) => b.total_commits - a.total_commits).map((item) => item.name)}
+                    secondColumn={data?.data?.repositories.repository_owned.detail.sort((a, b) => b.total_commits - a.total_commits).map((item) => item.total_commits)}
+                  />}
+                  {data?.data?.repositories.repository_contributed && data.data.repositories.repository_contributed.total > 0 && <Table 
+                    title="Repository Contributed"
+                    headers={["Repository Name", "Total Commits"]}
+                    firstColumn={data?.data?.repositories.repository_contributed.detail.sort((a, b) => b.total_commits - a.total_commits).map((item) => item.name)}
+                    secondColumn={data?.data?.repositories.repository_contributed.detail.sort((a, b) => b.total_commits - a.total_commits).map((item) => item.total_commits)}
+                  />}
+                  {data?.data?.repositories.repository_forked && data.data.repositories.repository_forked.total > 0 && <Table 
+                    title="Repository Forked"
+                    headers={["Repository Name", "Total Commits"]}
+                    firstColumn={data?.data?.repositories.repository_forked.detail.sort((a, b) => b.total_commits - a.total_commits).map((item) => item.name)}
+                    secondColumn={data?.data?.repositories.repository_forked.detail.sort((a, b) => b.total_commits - a.total_commits).map((item) => item.total_commits)}
+                  />}
+                  <Summary 
+                    title="Star Summary"
+                    detail={[
+                      {
+                        title: "Total Starred Repositories: ",
+                        data: data?.data?.starreds.total,
+                      },
+                      {
+                        title: "Total Stargazers: ",
+                        data: data?.data?.startgazers.total,
+                      },
+                    ]}
+                  />
+                  {data?.data?.starreds.detail && data.data.starreds.total > 0 && <Table 
+                    title="Starred Repositories"
+                    headers={["Repository Name"]}
+                    firstColumn={data?.data?.starreds.detail.sort().map((item) => item)}
+                  />}
+                  {data?.data?.startgazers.detail && data.data.startgazers.total > 0 && <Table 
+                    title="Stargazers"
+                    headers={["Repository Name", "Star Giver"]}
+                    firstColumn={data?.data?.startgazers.detail.sort().map((item) => item.split(" | ")[0])}
+                    secondColumn={data?.data?.startgazers.detail.sort().map((item) => item.split(" | ")[1])}
+                  />}
+                  {data?.data?.languages && data.data.languages.length > 0 && <Table 
+                    title="Favorite Language By Bytes Of Code"
+                    headers={["Languages", "Bytes Of Code"]}
+                    firstColumn={data?.data?.languages.sort((a, b) => b.byte_of_codes - a.byte_of_codes).map((item) => item.name)}
+                    secondColumn={data?.data?.languages.sort((a, b) => b.byte_of_codes - a.byte_of_codes).map((item) => item.byte_of_codes)}
+                  />}
+                  <Summary 
+                    title="Follows Summary"
+                    detail={[
+                      {
+                        title: "Total Followers: ",
+                        data: data?.data?.followers.total,
+                      },
+                      {
+                        title: "Total Followings: ",
+                        data: data?.data?.followings.total,
+                      },
+                      {
+                        title: "Total Unfollowers: ",
+                        data: data?.data?.unfollowers.total,
+                      },
+                      {
+                        title: "Total Unfollowings: ",
+                        data: data?.data?.unfollowings.total,
+                      },
+                    ]}
+                  />
+                  {data?.data?.followers && data.data.followers.total > 0 && <Table 
+                    title="Folowers"
+                    headers={["Username"]}
+                    firstColumn={data?.data?.followers.detail.sort().map((item) => item)}
+                  />}
+                  {data?.data?.followings && data.data.followings.total > 0 && <Table 
+                    title="Followings"
+                    headers={["Username"]}
+                    firstColumn={data?.data?.followings.detail.sort().map((item) => item)}
+                  />}
+                  {data?.data?.unfollowers && data.data.unfollowers.total > 0 && <Table 
+                    title="Unfolowers"
+                    headers={["Username"]}
+                    firstColumn={data?.data?.unfollowers.detail.sort().map((item) => item)}
+                  />}
+                  {data?.data?.unfollowings && data.data.unfollowings.total > 0 && <Table 
+                    title="Unfollowings"
+                    headers={["Username"]}
+                    firstColumn={data?.data?.unfollowings.detail.sort().map((item) => item)}
+                  />}
                 </>
               )
             }

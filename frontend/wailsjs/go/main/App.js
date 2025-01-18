@@ -9,7 +9,3 @@ export function GenerateData(arg1) {
 export function GetData(arg1) {
   return window['go']['main']['App']['GetData'](arg1);
 }
-
-export function Greet(arg1) {
-  return window['go']['main']['App']['Greet'](arg1);
-}

@@ -28,7 +28,7 @@ func GetData(personalAccessToken, startDate, endDate string) (response models.GW
 		Progress: "0%",
 		StarDate: startDate,
 		EndDate:  endDate,
-		Message:  "Use id, to get your data at the endpoint GET /result/:id",
+		Message:  "Initializing . . . . . Please wait until the progress is 100%",
 	})
 	if err != nil {
 		err = errors.New("failed to initiate data: " + err.Error())
