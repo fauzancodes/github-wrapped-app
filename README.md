@@ -1,6 +1,6 @@
 # GitHub Wrapped App
 
-Welcome to the **GitHub Wrapped App**. This App is built using [Go](https://go.dev/) with the [Wails](https://wails.io/) framework. It connects directly to GitHub's platform using the user's [GitHub Personal Access Token (classic)](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic), providing detailed insights into user activity across both public and private repositories. The API ensures high performance, security, and transparency, without storing sensitive user data.
+Welcome to the **GitHub Wrapped App**. This App is built using [Go](https://go.dev/) and [Next.JS](https://nextjs.org/) with the [Wails](https://wails.io/) framework. It connects directly to GitHub's platform using the user's [GitHub Personal Access Token (classic)](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic), providing detailed insights into user activity across both public and private repositories. The API ensures high performance, security, and transparency, without storing sensitive user data.
 
 ## Features
 
@@ -42,11 +42,12 @@ Welcome to the **GitHub Wrapped App**. This App is built using [Go](https://go.d
 ## How to Build?
 
 1. Install [Go](https://go.dev/)
-2. Install [NSIS](https://wails.io/docs/guides/windows-installer/#installing-nsis), optional
-3. Install [UPX](https://upx.github.io/), optional
-2. Clone this repository
-3. Provide database connection in the `.env` file
-4. Run `wails build -clean -obfuscated -nsis -upx`.
+2. Install [Node](https://nodejs.org/en)
+3. Install [NSIS](https://wails.io/docs/guides/windows-installer/#installing-nsis), optional
+4. Install [UPX](https://upx.github.io/), optional
+5. Clone this repository
+6. Provide database connection in the `.env` file
+7. Run `wails build -clean -obfuscated -nsis -upx`.
 
 ### Warning
 
