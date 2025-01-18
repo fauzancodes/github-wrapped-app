@@ -39,6 +39,14 @@ Welcome to the **GitHub Wrapped App**. This App is built using [Go](https://go.d
   - **User Control**: Users can verify the source code, clone the repository, and run the application locally to ensure transparency.  
   - **Token Revocation**: Tokens can be revoked from GitHub after use for additional peace of mind.
 
+## How to User?
+
+Please download the installer from the [release page](https://github.com/fauzancodes/github-wrapped-app/releases/tag/v1.0.0).
+
+## Warning
+
+I do not store your Github Personal Access Token data, if you don't believe me, please check the code, or if you want to be more comfortable, please build this project yourself.
+
 ## How to Build?
 
 1. Install [Go](https://go.dev/)
@@ -49,11 +57,7 @@ Welcome to the **GitHub Wrapped App**. This App is built using [Go](https://go.d
 6. Provide database connection in the `.env` file
 7. Run `wails build -clean -obfuscated -nsis -upx`.
 
-### Warning
-
-I do not store your Github Personal Access Token data, if you don't believe me, please check the code, or if you want to be more comfortable, please build this project yourself.
-
-### Additional Notes
+## Additional Notes
 
 Generation time for the data can vary significantly depending on the amount of data associated with the GitHub account. Users with extensive activity or large repositories may experience longer processing times.
 
