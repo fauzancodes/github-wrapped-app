@@ -65,4 +65,4 @@ Generation time for the data can vary significantly depending on the amount of d
 
 ---
 
-© 2025 GitHub Wrapped API Project. All rights reserved. By [fauzancodes](https://fauzancodes.id/).
+© 2025 GitHub Wrapped App Project. All rights reserved. By [fauzancodes](https://fauzancodes.id/).
