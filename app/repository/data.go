@@ -18,7 +18,7 @@ func GetDataByID(id uuid.UUID) (response models.GWAResult, err error) {
 	return
 }
 
-func Updatedata(data models.GWAResult) (models.GWAResult, error) {
+func UpdateData(data models.GWAResult) (models.GWAResult, error) {
 	err := config.DB.Save(&data).Error
 
 	return data, err

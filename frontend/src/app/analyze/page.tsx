@@ -343,7 +343,7 @@ const Page = () => {
                     ]}
                   />
                   {data?.data?.followers && data.data.followers.total > 0 && <Table 
-                    title="Folowers"
+                    title="Followers"
                     headers={["Username"]}
                     firstColumn={data?.data?.followers.detail.sort().map((item) => item)}
                   />}

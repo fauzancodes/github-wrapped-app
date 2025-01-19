@@ -14,7 +14,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func GetData(personalAccessToken, startDate, endDate string) (response models.GWAResult, err error) {
+func GenerateData(personalAccessToken, startDate, endDate string) (response models.GWAResult, err error) {
 	client := github.NewClient(nil).WithAuthToken(personalAccessToken)
 
 	user, _, err := client.Users.Get(context.Background(), "")
@@ -44,7 +44,7 @@ func ProcessData(client *github.Client, user *github.User, startDate, endDate st
 	data, _ := repository.GetDataByID(id)
 	data.Progress = "1%"
 	data.Message = "Calculating all repositories . . . . . Please wait until the progress is 100%"
-	repository.Updatedata(data)
+	repository.UpdateData(data)
 
 	var response dto.ResponseData
 
@@ -71,99 +71,77 @@ func ProcessData(client *github.Client, user *github.User, startDate, endDate st
 
 	startTime := time.Now()
 
-	repositoriesOwned, repositoriesForked, repositoriesContributed, err = GetRepositories(client, *user.Login, startDate, endDate)
+	repositoriesOwned, repositoriesForked, repositoriesContributed, err = GetRepositories(client, *user.Login, startDate, endDate, data)
 	if err != nil {
 		data.Message = err.Error()
-		repository.Updatedata(data)
-		return
-	}
-	data.Progress = "20%"
-	data.Message = "Calculating all starred repositories . . . . . Please wait until the progress is 100%"
-	repository.Updatedata(data)
-
-	starred, totalStarred, err = GetRepositoriesStarred(client, startDate, endDate)
-	if err != nil {
-		data.Message = err.Error()
-		repository.Updatedata(data)
+		repository.UpdateData(data)
 		return
 	}
 	data.Progress = "30%"
-	data.Message = "Calculating all stargazers . . . . . Please wait until the progress is 100%"
-	repository.Updatedata(data)
+	data.Message = "Calculating all starred repositories . . . . . Please wait until the progress is 100%"
+	repository.UpdateData(data)
 
-	stargazers, totalStargazers, err = GetStargazers(client, *user.Login, startDate, endDate, repositoriesOwned)
+	starred, totalStarred, err = GetRepositoriesStarred(client, startDate, endDate, data)
 	if err != nil {
 		data.Message = err.Error()
-		repository.Updatedata(data)
+		repository.UpdateData(data)
 		return
 	}
 	data.Progress = "40%"
-	data.Message = "Calculating all languages . . . . . Please wait until the progress is 100%"
-	repository.Updatedata(data)
+	data.Message = "Calculating all stargazers . . . . . Please wait until the progress is 100%"
+	repository.UpdateData(data)
 
-	languages, err = GetFavoriteLanguages(client, *user.Login, endDate, repositoriesOwned)
+	stargazers, totalStargazers, err = GetStargazers(client, *user.Login, startDate, endDate, repositoriesOwned, data)
 	if err != nil {
 		data.Message = err.Error()
-		repository.Updatedata(data)
+		repository.UpdateData(data)
 		return
 	}
 	data.Progress = "50%"
-	data.Message = "Calculating all followers . . . . . Please wait until the progress is 100%"
-	repository.Updatedata(data)
+	data.Message = "Calculating all languages . . . . . Please wait until the progress is 100%"
+	repository.UpdateData(data)
 
-	followers, totalFollowers, err = GetFollowers(client)
+	languages, err = GetFavoriteLanguages(client, *user.Login, endDate, repositoriesOwned, data)
 	if err != nil {
 		data.Message = err.Error()
-		repository.Updatedata(data)
+		repository.UpdateData(data)
 		return
 	}
 	data.Progress = "60%"
-	data.Message = "Calculating all followings . . . . . Please wait until the progress is 100%"
-	repository.Updatedata(data)
+	data.Message = "Calculating all followers . . . . . Please wait until the progress is 100%"
+	repository.UpdateData(data)
 
-	followings, totalFollowings, err = GetFollowings(client)
+	followers, totalFollowers, err = GetFollowers(client, data)
 	if err != nil {
 		data.Message = err.Error()
-		repository.Updatedata(data)
+		repository.UpdateData(data)
 		return
 	}
 	data.Progress = "70%"
-	data.Message = "Calculating all unfollowers . . . . . Please wait until the progress is 100%"
-	repository.Updatedata(data)
+	data.Message = "Calculating all followings . . . . . Please wait until the progress is 100%"
+	repository.UpdateData(data)
 
-	for _, following := range followings {
-		var found bool
-		for _, follower := range followers {
-			if following == follower {
-				found = true
-				break
-			}
-		}
-		if !found {
-			unfollowers = append(unfollowers, following)
-		}
+	followings, totalFollowings, err = GetFollowings(client, data)
+	if err != nil {
+		data.Message = err.Error()
+		repository.UpdateData(data)
+		return
 	}
-	totalUnfollwers = len(unfollowers)
 	data.Progress = "80%"
-	data.Message = "Calculating all unfollowings . . . . . Please wait until the progress is 100%"
-	repository.Updatedata(data)
+	data.Message = "Calculating all unfollowers . . . . . Please wait until the progress is 100%"
+	repository.UpdateData(data)
 
-	for _, follower := range followers {
-		var found bool
-		for _, following := range followings {
-			if follower == following {
-				found = true
-				break
-			}
-		}
-		if !found {
-			unfollowings = append(unfollowings, follower)
-		}
-	}
-	totalUnfollowings = len(unfollowings)
+	unfollowers = CalculateUnfollowers(followings, followers, data)
+	totalUnfollwers = len(unfollowers)
 	data.Progress = "90%"
+	data.Message = "Calculating all unfollowings . . . . . Please wait until the progress is 100%"
+	repository.UpdateData(data)
+
+	unfollowings = CalculateUnfollowings(followers, followings, data)
+	totalUnfollowings = len(unfollowings)
+	data.Progress = "99%"
 	data.Message = "Finalizing results . . . . . Please wait until the progress is 100%"
-	repository.Updatedata(data)
+	repository.UpdateData(data)
 
 	response.Repositories = dto.RepositoriesResponse{
 		RepositoriesOwned: dto.DetailRepository{
@@ -236,12 +214,12 @@ func ProcessData(client *github.Client, user *github.User, startDate, endDate st
 	dataJson, err := json.Marshal(response)
 	if err != nil {
 		data.Message = "failed to convert result to json: " + err.Error()
-		repository.Updatedata(data)
+		repository.UpdateData(data)
 		return
 	}
 	data.Latency = latency
 	data.Data = string(dataJson)
 	data.Progress = "100%"
 	data.Message = "Success to generate data"
-	repository.Updatedata(data)
+	repository.UpdateData(data)
 }

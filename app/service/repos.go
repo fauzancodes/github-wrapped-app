@@ -5,16 +5,24 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"strconv"
 
 	"github.com/fauzancodes/github-wrapped-app/app/dto"
+	"github.com/fauzancodes/github-wrapped-app/app/models"
 	"github.com/fauzancodes/github-wrapped-app/app/pkg/utils"
+	"github.com/fauzancodes/github-wrapped-app/app/repository"
 	"github.com/google/go-github/v68/github"
 )
 
-func GetRepositories(client *github.Client, username, startDate, endDate string) (repositoriesOwned, repositoriesForked, repositoriesContributed []dto.RepositoriesData, err error) {
+func GetRepositories(client *github.Client, username, startDate, endDate string, data models.GWAResult) (repositoriesOwned, repositoriesForked, repositoriesContributed []dto.RepositoriesData, err error) {
 	options := &github.RepositoryListByAuthenticatedUserOptions{
 		ListOptions: github.ListOptions{PerPage: 10},
 	}
+
+	var totalPage int
+	currentPage := 1
+	percentageOffset := 1
+	targetPercentage := 30
 
 	for {
 		var repos []*github.Repository
@@ -24,6 +32,7 @@ func GetRepositories(client *github.Client, username, startDate, endDate string)
 			err = errors.New("error fetching repositories: " + err.Error())
 			return
 		}
+		totalPage = resp.LastPage
 
 		for _, repo := range repos {
 			repoDate := repo.CreatedAt.Time
@@ -69,6 +78,10 @@ func GetRepositories(client *github.Client, username, startDate, endDate string)
 			break
 		}
 
+		data.Progress = strconv.Itoa(utils.CalculateCurrentLoadingPercentage(targetPercentage, percentageOffset, currentPage, totalPage)) + "%"
+		repository.UpdateData(data)
+		currentPage++
+
 		options.Page = resp.NextPage
 	}
 
@@ -111,12 +124,17 @@ func CountCommitsInRepo(client *github.Client, username, repoOwner, repoName, st
 	return
 }
 
-func GetRepositoriesStarred(client *github.Client, startDate, endDate string) (allRepos []string, totalRepositoriesStarred int, err error) {
+func GetRepositoriesStarred(client *github.Client, startDate, endDate string, data models.GWAResult) (allRepos []string, totalRepositoriesStarred int, err error) {
 	options := &github.ActivityListStarredOptions{
 		ListOptions: github.ListOptions{
 			PerPage: 10,
 		},
 	}
+
+	var totalPage int
+	currentPage := 1
+	percentageOffset := 30
+	targetPercentage := 40
 
 	for {
 		var repos []*github.StarredRepository
@@ -126,6 +144,8 @@ func GetRepositoriesStarred(client *github.Client, startDate, endDate string) (a
 			err = errors.New("error fetching repositories starred: " + err.Error())
 			return
 		}
+		totalPage = resp.LastPage
+		fmt.Println("resp.LastPage:", resp.LastPage)
 
 		for _, repo := range repos {
 			starredDate := repo.StarredAt.Time
@@ -142,6 +162,10 @@ func GetRepositoriesStarred(client *github.Client, startDate, endDate string) (a
 			break
 		}
 
+		data.Progress = strconv.Itoa(utils.CalculateCurrentLoadingPercentage(targetPercentage, percentageOffset, currentPage, totalPage)) + "%"
+		repository.UpdateData(data)
+		currentPage++
+
 		options.Page = resp.NextPage
 	}
 
@@ -150,7 +174,12 @@ func GetRepositoriesStarred(client *github.Client, startDate, endDate string) (a
 	return
 }
 
-func GetStargazers(client *github.Client, username, startDate, endDate string, repos []dto.RepositoriesData) (allStargazers []string, totalStarEarned int, err error) {
+func GetStargazers(client *github.Client, username, startDate, endDate string, repos []dto.RepositoriesData, data models.GWAResult) (allStargazers []string, totalStarEarned int, err error) {
+	totalPage := len(repos)
+	currentPage := 1
+	percentageOffset := 40
+	targetPercentage := 50
+
 	for _, repo := range repos {
 		options := &github.ListOptions{
 			PerPage: 10,
@@ -183,13 +212,22 @@ func GetStargazers(client *github.Client, username, startDate, endDate string, r
 			options.Page = resp.NextPage
 		}
 
+		data.Progress = strconv.Itoa(utils.CalculateCurrentLoadingPercentage(targetPercentage, percentageOffset, currentPage, totalPage)) + "%"
+		repository.UpdateData(data)
+		currentPage++
+
 		totalStarEarned = len(allStargazers)
 	}
 
 	return
 }
 
-func GetFavoriteLanguages(client *github.Client, username, endDate string, repos []dto.RepositoriesData) (languages []dto.LanguageData, err error) {
+func GetFavoriteLanguages(client *github.Client, username, endDate string, repos []dto.RepositoriesData, data models.GWAResult) (languages []dto.LanguageData, err error) {
+	totalPage := len(repos)
+	currentPage := 1
+	percentageOffset := 50
+	targetPercentage := 60
+
 	languagesData := make(map[string]int)
 
 	for _, repo := range repos {
@@ -209,6 +247,10 @@ func GetFavoriteLanguages(client *github.Client, username, endDate string, repos
 		for key, value := range langs {
 			languagesData[key] += value
 		}
+
+		data.Progress = strconv.Itoa(utils.CalculateCurrentLoadingPercentage(targetPercentage, percentageOffset, currentPage, totalPage)) + "%"
+		repository.UpdateData(data)
+		currentPage++
 	}
 
 	for key, value := range languagesData {

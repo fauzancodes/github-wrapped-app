@@ -34,7 +34,7 @@ func (a *App) GenerateData(request dto.Request) (result models.GWAResult, err er
 		return
 	}
 
-	result, err = service.GetData(request.PersonalAccessToken, request.StartDate, request.EndDate)
+	result, err = service.GenerateData(request.PersonalAccessToken, request.StartDate, request.EndDate)
 	if err != nil {
 		err = errors.New("failed to generate data: " + err.Error())
 		return
