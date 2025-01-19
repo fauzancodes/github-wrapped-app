@@ -6,6 +6,7 @@ import { GenerateData, GetData } from "../../../wailsjs/go/main/App"
 import { dto, models } from "../../../wailsjs/go/models"
 import Summary from "../ui/main/analyze/summary"
 import Table from "../ui/main/analyze/table"
+import { FaRegArrowAltCircleDown } from "react-icons/fa"
 
 
 const Page = () => {
@@ -174,6 +175,17 @@ const Page = () => {
             />
           </label>
         </label>
+        <div className="text-xs w-full md:w-6/12">
+          <p className="font-medium">Warning:</p>
+          <ul className="list-disc pl-5">
+            <li>
+              Generation time for the data can vary significantly depending on the amount of data associated with the GitHub account. Users with extensive activity or large repositories may experience longer processing times.
+            </li>
+            <li>
+              I do not store your Github Personal Access Token data, if you don&#39;t believe me, please check the code, or if you want to be more comfortable, please delete your github personal access token after doing the analysis or build this project yourself with the source code that I have provided.
+            </li>
+          </ul>
+        </div>
         <section className="w-full text-center">
           <button type="submit" className="btn btn-primary font-bold text-lg hover:text-base-100" disabled={isLoadingAnalyzing}>
             {isLoadingAnalyzing ? "Analyzing....." : "Start Analyzing"}
@@ -202,10 +214,11 @@ const Page = () => {
           </button>
         </section>
       </form>
+      {data && <FaRegArrowAltCircleDown className="animate-bounce mx-auto my-5 text-4xl text-primary" />}
       {error && <p className="text-base-100 bg-accent rounded-xl !px-3 !py-2 w-fit text-center !my-10 !mx-10 md:!mx-auto">{error}</p>}
       {
         data && (
-          <section className="mt-24 w-full flex flex-col items-center gap-5">
+          <section id="result" className="mt-24 w-full flex flex-col items-center gap-5">
             {
               data?.progress !== "100%" ? (
                 <>
@@ -217,7 +230,7 @@ const Page = () => {
                 </>
               ) : (
                 <>
-                  <div id="result" className="w-11/12 md:w-10/12 border-b border-bottom border-primary">
+                  <div className="w-11/12 md:w-10/12 border-b border-bottom border-primary">
                     <h2 className="font-black text-4xl !mb-2">Result</h2>
                     <div className="mb-2">
                       <span className="font-medium">Data Id: </span>

@@ -1,6 +1,8 @@
 # GitHub Wrapped App
 
-Welcome to the **GitHub Wrapped App**. This App is built using [Go](https://go.dev/) and [Next.JS](https://nextjs.org/) with the [Wails](https://wails.io/) framework. It connects directly to GitHub's platform using the user's [GitHub Personal Access Token (classic)](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic), providing detailed insights into user activity across both public and private repositories. The API ensures high performance, security, and transparency, without storing sensitive user data.
+Welcome to the **GitHub Wrapped App**. This desktop application is built with modern technologies to deliver high performance and an optimized user experience. Powered by [Go](https://go.dev/) for data processing, [GORM]("https://gorm.io/") for efficient database connections, and [PostgreSQL]("https://www.postgresql.org/") as a reliable database, it ensures speed and robustness. On the frontend, [Next.JS](https://nextjs.org/), [TailwindCSS]("https://tailwindcss.com/"), and [DaisyUI]("https://daisyui.com/") are utilized to create a responsive and visually appealing UI/UX. All components are seamlessly integrated into a desktop application using [Wails](https://wails.io/), resulting in a professional and cohesive solution.
+
+It connects directly to GitHub's platform using the user's [GitHub Personal Access Token (classic)](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic), providing detailed insights into user activity across both public and private repositories. The API ensures high performance, security, and transparency, without storing sensitive user data.
 
 ## Features
 
@@ -45,7 +47,7 @@ Please download the windows installer from the [release page](https://github.com
 
 ## Warning
 
-I do not store your Github Personal Access Token data, if you don't believe me, please check the code, or if you want to be more comfortable, please build this project yourself.
+I do not store your Github Personal Access Token data, if you don't believe me, please check the code, or if you want to be more comfortable, please delete your github personal access token after doing the analysis or build this project yourself with the source code that I have provided.
 
 ## How to Build?
 
