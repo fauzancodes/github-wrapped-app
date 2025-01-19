@@ -244,7 +244,7 @@ const Page = () => {
                       <span className="font-medium">End Date: </span>
                       <span className="font-bold">{data?.end_date}</span>
                     </div>
-                    <div className="mb-5">
+                    <div className="mb-2">
                       <span className="font-medium">Username: </span>
                       <span className="font-bold">{data?.username}</span>
                     </div>
