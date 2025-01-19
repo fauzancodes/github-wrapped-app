@@ -235,6 +235,10 @@ const Page = () => {
                       <span className="font-medium">Username: </span>
                       <span className="font-bold">{data?.username}</span>
                     </div>
+                    <div className="mb-5">
+                      <span className="font-medium">Latency: </span>
+                      <span className="font-bold">{data?.latency}</span>
+                    </div>
                   </div>
                   <Summary 
                     title="Repository Summary" 
