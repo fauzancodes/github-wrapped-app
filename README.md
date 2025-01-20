@@ -2,7 +2,7 @@
 
 Welcome to the **GitHub Wrapped App**. This desktop application is built with modern technologies to deliver high performance and an optimized user experience. Powered by [Go](https://go.dev/) for data processing, [GORM]("https://gorm.io/") for efficient database connections, and [PostgreSQL]("https://www.postgresql.org/") as a reliable database, it ensures speed and robustness. On the frontend, [Next.JS](https://nextjs.org/), [TailwindCSS]("https://tailwindcss.com/"), and [DaisyUI]("https://daisyui.com/") are utilized to create a responsive and visually appealing UI/UX. All components are seamlessly integrated into a desktop application using [Wails](https://wails.io/), resulting in a professional and cohesive solution.
 
-It connects directly to GitHub's platform using the user's [GitHub Personal Access Token (classic)](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic), providing detailed insights into user activity across both public and private repositories. The API ensures high performance, security, and transparency, without storing sensitive user data.
+It connects directly to GitHub's platform using the user's [GitHub Personal Access Token (classic)](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic), providing detailed insights into user activity across both public and private repositories. The App ensures high performance, security, and transparency, without storing sensitive user data.
 
 ## Features
 
