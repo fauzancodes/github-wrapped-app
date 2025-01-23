@@ -25,7 +25,7 @@ func GetFollowers(client *github.Client, data models.GWAResult) (allFollowers []
 		var followers []*github.User
 		var resp *github.Response
 		followers, resp, err = client.Users.ListFollowers(context.Background(), "", options)
-		if err != nil {
+		if err != nil && resp.StatusCode != 409 && resp.StatusCode != 404 && resp.StatusCode != 403 {
 			err = errors.New("error fetching followers: " + err.Error())
 			return
 		}
@@ -65,7 +65,7 @@ func GetFollowings(client *github.Client, data models.GWAResult) (allFollowings 
 		var followings []*github.User
 		var resp *github.Response
 		followings, resp, err = client.Users.ListFollowing(context.Background(), "", options)
-		if err != nil {
+		if err != nil && resp.StatusCode != 409 && resp.StatusCode != 404 && resp.StatusCode != 403 {
 			err = errors.New("error fetching followings: " + err.Error())
 			return
 		}

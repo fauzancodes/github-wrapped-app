@@ -28,7 +28,7 @@ func GetRepositories(client *github.Client, username, startDate, endDate string,
 		var repos []*github.Repository
 		var resp *github.Response
 		repos, resp, err = client.Repositories.ListByAuthenticatedUser(context.Background(), options)
-		if err != nil {
+		if err != nil && resp.StatusCode != 409 && resp.StatusCode != 404 && resp.StatusCode != 403 {
 			err = errors.New("error fetching repositories: " + err.Error())
 			return
 		}
@@ -98,7 +98,7 @@ func CountCommitsInRepo(client *github.Client, username, repoOwner, repoName, st
 		var commits []*github.RepositoryCommit
 		var resp *github.Response
 		commits, resp, err = client.Repositories.ListCommits(context.Background(), repoOwner, repoName, options)
-		if err != nil {
+		if err != nil && resp.StatusCode != 409 && resp.StatusCode != 404 && resp.StatusCode != 403 {
 			err = errors.New("error fetching commits: " + err.Error() + ". Repository: " + repoName)
 			return
 		}
@@ -140,7 +140,7 @@ func GetRepositoriesStarred(client *github.Client, startDate, endDate string, da
 		var repos []*github.StarredRepository
 		var resp *github.Response
 		repos, resp, err = client.Activity.ListStarred(context.Background(), "", options)
-		if err != nil {
+		if err != nil && resp.StatusCode != 409 && resp.StatusCode != 404 && resp.StatusCode != 403 {
 			err = errors.New("error fetching repositories starred: " + err.Error())
 			return
 		}
@@ -189,7 +189,7 @@ func GetStargazers(client *github.Client, username, startDate, endDate string, r
 			var stargazers []*github.Stargazer
 			var resp *github.Response
 			stargazers, resp, err = client.Activity.ListStargazers(context.Background(), username, repo.Name, options)
-			if err != nil {
+			if err != nil && resp.StatusCode != 409 && resp.StatusCode != 404 && resp.StatusCode != 403 {
 				err = errors.New("error fetching stargazer: " + err.Error())
 				return
 			}
@@ -238,8 +238,9 @@ func GetFavoriteLanguages(client *github.Client, username, endDate string, repos
 		}
 
 		var langs map[string]int
-		langs, _, err = client.Repositories.ListLanguages(context.Background(), username, repo.Name)
-		if err != nil {
+		var resp *github.Response
+		langs, resp, err = client.Repositories.ListLanguages(context.Background(), username, repo.Name)
+		if err != nil && resp.StatusCode != 409 && resp.StatusCode != 404 && resp.StatusCode != 403 {
 			err = errors.New("error fetching languages: " + err.Error())
 			return
 		}
