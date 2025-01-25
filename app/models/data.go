@@ -21,7 +21,7 @@ type GWAResult struct {
 }
 
 func (GWAResult) TableName() string {
-	return "gwa_results"
+	return "gwa_data"
 }
 
 type CustomGormModel struct {
